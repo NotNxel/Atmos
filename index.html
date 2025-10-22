@@ -11,13 +11,20 @@
     margin: 0;
     font-family: 'Montserrat', sans-serif;
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
     color: #fff;
     transition: background 1s ease;
     text-align: center;
     user-select: none;
-    flex-direction: column;
+  }
+  h1 {
+    font-weight: 100; /* really thin */
+    font-stretch: ultra-condensed; /* very narrow */
+    font-size: 3em;
+    margin: 0.5em 0 0.2em 0;
+    text-shadow: 0 0 12px rgba(0,0,0,0.4);
   }
   .container {
     font-weight: 200;
@@ -38,6 +45,13 @@
     margin-top: 0.1em;
     color: rgba(255,255,255,0.7);
   }
+  #ipAddress {
+    font-size: 1em;
+    color: rgba(255,255,255,0.5);
+    margin-top: 1em;
+    font-weight: 100;
+    font-stretch: ultra-condensed;
+  }
   /* Backgrounds based on time */
   .morning {
     background: linear-gradient(to top, #ffe259, #ffa751);
@@ -54,27 +68,27 @@
 </style>
 </head>
 <body class="day">
+  <h1>Atmos</h1>
   <div id="time" class="container">--:--:--</div>
   <div id="weatherEmoji" class="emoji">☀️</div>
   <div id="temp" class="temp">--°C</div>
   <div id="greeting" class="subtitle">Loading...</div>
+  <div id="ipAddress">Detecting IP...</div>
 
 <script>
   const apiKey = 'YOUR_API_KEY'; // Replace with your OpenWeatherMap API key
-  const city = 'New York'; // Change city or make it dynamic as needed
+  const city = 'New York'; // Change city or make dynamic
 
-  // Map OpenWeather icons to emojis (for display only)
   function getEmoji(icon) {
     const code = icon.slice(0,2);
-    if (code === '01') return icon.endsWith('d') ? '☀️' : '🌕'; // clear day/night
-    if (['02','03','04'].includes(code)) return '☁️'; // clouds
-    if (['09','10'].includes(code)) return '🌧️'; // rain
-    if (code === '11') return '⛈️'; // thunderstorm
-    if (code === '13') return '❄️'; // snow
-    return '🌡️'; // default
+    if (code === '01') return icon.endsWith('d') ? '☀️' : '🌕';
+    if (['02','03','04'].includes(code)) return '☁️';
+    if (['09','10'].includes(code)) return '🌧️';
+    if (code === '11') return '⛈️';
+    if (code === '13') return '❄️';
+    return '🌡️';
   }
 
-  // Set background class by current hour only (ignores weather)
   function updateBackgroundClassByTime() {
     const h = new Date().getHours();
     let cls = 'day';
@@ -92,9 +106,8 @@
   }
 
   async function fetchWeather() {
-    const url = `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${apiKey}&units=metric`;
     try {
-      const res = await fetch(url);
+      const res = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${apiKey}&units=metric`);
       if (!res.ok) throw new Error('Weather fetch failed');
       const data = await res.json();
       const temp = Math.round(data.main.temp);
@@ -110,13 +123,27 @@
     }
   }
 
+  async function fetchIP() {
+    try {
+      const res = await fetch('https://api.ipify.org?format/json');
+      if (!res.ok) throw new Error('IP fetch failed');
+      const data = await res.json();
+      document.getElementById('ipAddress').textContent = `Your IP: ${data.ip}`;
+    } catch (e) {
+      document.getElementById('ipAddress').textContent = 'Unable to detect IP';
+      console.error(e);
+    }
+  }
+
   function init() {
     updateBackgroundClassByTime();
     updateTime();
     fetchWeather();
+    fetchIP();
     setInterval(updateTime, 1000);
-    setInterval(fetchWeather, 10 * 60 * 1000); // refresh weather every 10 mins
-    setInterval(updateBackgroundClassByTime, 60 * 1000); // refresh background every min for time change
+    setInterval(fetchWeather, 10 * 60 * 1000);
+    setInterval(updateBackgroundClassByTime, 60 * 1000);
+    setInterval(fetchIP, 10 * 60 * 1000);
   }
 
   init();
