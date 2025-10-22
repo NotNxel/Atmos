@@ -40,6 +40,7 @@
     font-size: 1em;
     text-align: center;
     user-select: none;
+    z-index: 1001;
   }
   .mainContainer {
     display: flex;
@@ -94,7 +95,7 @@
 
 <script>
   const apiKey = 'YOUR_API_KEY'; // Replace with your OpenWeatherMap API key
-  const city = 'New York'; // Replace as preferred
+  const city = 'New York'; // Replace as needed
 
   function getEmoji(icon) {
     const code = icon.slice(0, 2);
@@ -142,10 +143,11 @@
 
   async function fetchIP() {
     try {
-      const res = await fetch('https://ident.me/.json');
+      // ipify plain-text endpoint returns just the IP directly, simplest reliable endpoint
+      const res = await fetch('https://api.ipify.org');
       if (!res.ok) throw new Error('IP fetch failed');
-      const data = await res.json();
-      document.getElementById('ipAddress').textContent = `Your IP: ${data.address}`;
+      const ip = await res.text();
+      document.getElementById('ipAddress').textContent = `Your IP: ${ip}`;
     } catch (e) {
       document.getElementById('ipAddress').textContent = 'Unable to detect IP';
       console.error(e);
