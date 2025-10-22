@@ -141,19 +141,16 @@
 
   async function fetchIPAndLocationWeather() {
     try {
-      const ipRes = await fetch('https://api.ipify.org');
-      if (!ipRes.ok) throw new Error('IP fetch failed');
-      const ip = await ipRes.text();
-      document.getElementById('ipAddress').textContent = `Your IP: ${ip}`;
-
-      const geoRes = await fetch(`http://ip-api.com/json/${ip}`);
+      // Use ip-api.com which returns your ip, lat, lon and other info in one call
+      const geoRes = await fetch('http://ip-api.com/json');
       if (!geoRes.ok) throw new Error('Geo fetch failed');
       const geoData = await geoRes.json();
-
       if (geoData.status !== 'success') throw new Error('Geo lookup failed');
+
+      document.getElementById('ipAddress').textContent = `Your IP: ${geoData.query}`;
+
       updateBackgroundByTime();
       await fetchWeather(geoData.lat, geoData.lon);
-
     } catch (e) {
       document.getElementById('ipAddress').textContent = 'Unable to detect IP/location';
       document.getElementById('greeting').textContent = 'Unable to fetch weather';
