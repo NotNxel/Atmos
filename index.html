@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Atmos - Minimal Weather & Time</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@200&display=swap');
+  body, html {
+    height: 100%;
+    margin: 0;
+    font-family: 'Montserrat', sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    transition: background 1s ease;
+    text-align: center;
+    user-select: none;
+  }
+  .container {
+    font-weight: 200;
+    font-size: 4em;
+    text-shadow: 0 0 10px rgba(0,0,0,0.4);
+  }
+  .subtitle {
+    font-size: 1.2em;
+    margin-top: 0.3em;
+    color: rgba(255,255,255,0.7);
+  }
+  /* Backgrounds */
+  .morning {
+    background: linear-gradient(to top, #ffe259, #ffa751);
+  }
+  .day {
+    background: linear-gradient(to top, #56ccf2, #2f80ed);
+  }
+  .evening {
+    background: linear-gradient(to top, #614385, #516395);
+  }
+  .night {
+    background: radial-gradient(ellipse at bottom, #1b2735 0%, #090a0f 100%);
+  }
+</style>
+</head>
+<body>
+  <div class="container">
+    <div id="time">--:--:--</div>
+    <div class="subtitle" id="greeting">Loading...</div>
+  </div>
+
+<script>
+  function updateTimeAndBackground() {
+    const now = new Date();
+    let h = now.getHours();
+    let m = now.getMinutes();
+    let s = now.getSeconds();
+
+    // Format time with leading zero
+    m = m < 10 ? '0' + m : m;
+    s = s < 10 ? '0' + s : s;
+
+    const timeString = `${h}:${m}:${s}`;
+    document.getElementById('time').textContent = timeString;
+
+    const body = document.body;
+    let greeting = '';
+
+    // Change background based on hour and set greeting text
+    if (h >= 5 && h < 8) {
+      body.className = 'morning';
+      greeting = 'Good Morning';
+    } else if (h >= 8 && h < 17) {
+      body.className = 'day';
+      greeting = 'Good Day';
+    } else if (h >= 17 && h < 20) {
+      body.className = 'evening';
+      greeting = 'Good Evening';
+    } else {
+      body.className = 'night';
+      greeting = 'Good Night';
+    }
+    document.getElementById('greeting').textContent = greeting;
+  }
+
+  // Update immediately and then every second
+  updateTimeAndBackground();
+  setInterval(updateTimeAndBackground, 1000);
+</script>
+</body>
+</html>
