@@ -68,7 +68,7 @@
     margin-top: 0.1em;
     color: rgba(255,255,255,0.7);
   }
-  /* Background by time */
+  /* Backgrounds by time */
   .morning {
     background: linear-gradient(to top, #ffe259, #ffa751);
   }
@@ -131,8 +131,8 @@
       if (!res.ok) throw new Error('Weather fetch failed');
       const data = await res.json();
       document.getElementById('temp').textContent = `${data.temp}°C`;
-      document.getElementById('weatherEmoji').textContent = getEmoji(data.cloud_pct ? 'cloud' : data.weather || '');
-      document.getElementById('greeting').textContent = data.weather || 'Clear';
+      document.getElementById('weatherEmoji').textContent = getEmoji(data.weather);
+      document.getElementById('greeting').textContent = data.weather;
     } catch (e) {
       document.getElementById('greeting').textContent = 'Unable to fetch weather';
       console.error(e);
@@ -141,16 +141,21 @@
 
   async function fetchIPAndLocationWeather() {
     try {
-      // Use ip-api.com which returns your ip, lat, lon and other info in one call
-      const geoRes = await fetch('http://ip-api.com/json');
+      // Get IP first
+      const ipRes = await fetch('https://api.ipify.org');
+      if (!ipRes.ok) throw new Error('IP fetch failed');
+      const ip = await ipRes.text();
+      document.getElementById('ipAddress').textContent = `Your IP: ${ip}`;
+
+      // Get geo location from IP
+      const geoRes = await fetch(`http://ip-api.com/json/${ip}`);
       if (!geoRes.ok) throw new Error('Geo fetch failed');
       const geoData = await geoRes.json();
       if (geoData.status !== 'success') throw new Error('Geo lookup failed');
-
-      document.getElementById('ipAddress').textContent = `Your IP: ${geoData.query}`;
-
+      
       updateBackgroundByTime();
       await fetchWeather(geoData.lat, geoData.lon);
+
     } catch (e) {
       document.getElementById('ipAddress').textContent = 'Unable to detect IP/location';
       document.getElementById('greeting').textContent = 'Unable to fetch weather';
