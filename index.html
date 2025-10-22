@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Atmos - IP Location Weather</title>
+<title>Atmos - Weather & Time</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@100&display=swap');
   body, html {
@@ -11,136 +11,159 @@
     margin: 0;
     font-family: 'Montserrat', sans-serif;
     color: #fff;
+    transition: background 1s ease;
     text-align: center;
-    background: linear-gradient(to top, #56ccf2, #2f80ed);
     user-select: none;
+    background: linear-gradient(to top, #56ccf2, #2f80ed);
   }
-  #header {
+  #topText {
     position: fixed;
     top: 0;
     width: 100%;
-    padding: 10px;
+    padding: 5px 15px;
     font-weight: 100;
     font-stretch: ultra-condensed;
     font-size: 2em;
+    text-shadow: 0 0 8px rgba(0,0,0,0.4);
     background: transparent;
-    text-shadow: 0 0 5px rgba(0,0,0,0.7);
+    text-align: center;
     z-index: 1000;
+    user-select: none;
   }
-  #ipInfo {
-    margin-top: 60px;
-    font-size: 1.2em;
-    color: rgba(255,255,255,0.7);
+  #ipAddress {
+    position: fixed;
+    top: 2.5em;
+    width: 100%;
+    font-weight: 100;
+    font-stretch: ultra-condensed;
+    color: rgba(255,255,255,0.5);
+    font-size: 1em;
+    text-align: center;
+    user-select: none;
   }
-  #weather {
-    margin-top: 20px;
-    font-size: 1.5em;
+  .mainContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    padding-top: 70px; /* to avoid overlapping with fixed texts */
   }
   #time {
-    font-size: 3em;
-    margin-top: 20px;
     font-weight: 200;
+    font-size: 4em;
     text-shadow: 0 0 10px rgba(0,0,0,0.5);
+  }
+  #weatherEmoji {
+    font-size: 3em;
+    margin: 0.3em 0;
+  }
+  #temp {
+    font-size: 2.5em;
+    margin-top: 0.2em;
+  }
+  #greeting {
+    font-size: 1.2em;
+    margin-top: 0.1em;
+    color: rgba(255,255,255,0.7);
+  }
+  /* Backgrounds by time */
+  .morning {
+    background: linear-gradient(to top, #ffe259, #ffa751);
+  }
+  .day {
+    background: linear-gradient(to top, #56ccf2, #2f80ed);
+  }
+  .evening {
+    background: linear-gradient(to top, #614385, #516395);
+  }
+  .night {
+    background: radial-gradient(ellipse at bottom, #1b2735 0%, #090a0f 100%);
   }
 </style>
 </head>
-<body>
-
-<div id="header">Atmos</div>
-<div id="ipInfo">Detecting IP & Location...</div>
-<div id="weather">Loading Weather...</div>
-<div id="time">--:--:--</div>
+<body class="day">
+  <div id="topText">Atmos</div>
+  <div id="ipAddress">Detecting IP...</div>
+  <div class="mainContainer">
+    <div id="time">--:--:--</div>
+    <div id="weatherEmoji">☀️</div>
+    <div id="temp">--°C</div>
+    <div id="greeting">Loading...</div>
+  </div>
 
 <script>
-// Function to update time every second
-function updateTime() {
-  const now = new Date();
-  const timeString = now.toLocaleTimeString('en-GB', { hour12: false });
-  document.getElementById('time').textContent = timeString;
-}
+  const apiKey = 'YOUR_API_KEY'; // Replace with your OpenWeatherMap API key
+  const city = 'New York'; // Replace as preferred
 
-// Function to get emoji based on weather description
-function getWeatherEmoji(desc) {
-  desc = desc.toLowerCase();
-  if(desc.includes('clear')) return '☀️';
-  if(desc.includes('cloud')) return '☁️';
-  if(desc.includes('rain')) return '🌧️';
-  if(desc.includes('thunderstorm')) return '⛈️';
-  if(desc.includes('snow')) return '❄️';
-  if(desc.includes('fog') || desc.includes('mist')) return '🌫️';
-  return '🌡️';
-}
-
-async function fetchIPLocationWeather() {
-  try {
-    // Use ipinfo.io API (requires free signup for token)
-    const ipInfoToken = '55a4312cf9f21e'; // Get from https://ipinfo.io/
-    const ipInfoRes = await fetch(`https://ipinfo.io/json?token=${ipInfoToken}`);
-    const ipData = await ipInfoRes.json();
-    
-    const loc = ipData.loc.split(',');
-    const lat = loc[0];
-    const lon = loc[1];
-    document.getElementById('ipInfo').textContent = `IP: ${ipData.ip} | Location: ${ipData.city}, ${ipData.region}, ${ipData.country}`;
-    
-    // Use Open-Meteo API (free, no key required) for weather from lat lon
-    const weatherRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`);
-    const weatherData = await weatherRes.json();
-    const currentWeather = weatherData.current_weather;
-    
-    const temp = currentWeather.temperature;
-    const weatherCode = currentWeather.weathercode;  // weather code number
-    
-    // Basic weather code interpretation from Open-Meteo docs (simplified)
-    const weatherMap = {
-      0: 'Clear sky',
-      1: 'Mainly clear',
-      2: 'Partly cloudy',
-      3: 'Overcast',
-      45: 'Fog',
-      48: 'Depositing rime fog',
-      51: 'Light drizzle',
-      53: 'Moderate drizzle',
-      55: 'Dense drizzle',
-      56: 'Light freezing drizzle',
-      57: 'Dense freezing drizzle',
-      61: 'Slight rain',
-      63: 'Moderate rain',
-      65: 'Heavy rain',
-      66: 'Light freezing rain',
-      67: 'Heavy freezing rain',
-      71: 'Slight snow fall',
-      73: 'Moderate snow fall',
-      75: 'Heavy snow fall',
-      77: 'Snow grains',
-      80: 'Slight rain showers',
-      81: 'Moderate rain showers',
-      82: 'Violent rain showers',
-      85: 'Slight snow showers',
-      86: 'Heavy snow showers',
-      95: 'Thunderstorm',
-      96: 'Thunderstorm with slight hail',
-      99: 'Thunderstorm with heavy hail'
-    };
-    
-    const weatherDesc = weatherMap[weatherCode] || 'Clear';
-    const emoji = getWeatherEmoji(weatherDesc);
-
-    document.getElementById('weather').textContent = `${emoji} ${weatherDesc} | Temp: ${temp}°C`;
-  
-  } catch (error) {
-    document.getElementById('ipInfo').textContent = 'Unable to detect IP/location';
-    document.getElementById('weather').textContent = 'Unable to fetch weather';
-    console.error(error);
+  function getEmoji(icon) {
+    const code = icon.slice(0, 2);
+    if (code === '01') return icon.endsWith('d') ? '☀️' : '🌕';
+    if (['02','03','04'].includes(code)) return '☁️';
+    if (['09','10'].includes(code)) return '🌧️';
+    if (code === '11') return '⛈️';
+    if (code === '13') return '❄️';
+    return '🌡️';
   }
-}
 
-updateTime();
-setInterval(updateTime, 1000);
-fetchIPLocationWeather();
-setInterval(fetchIPLocationWeather, 10 * 60 * 1000);
+  function updateBackgroundByTime() {
+    const h = new Date().getHours();
+    let cls = 'day';
+    if (h >= 5 && h < 8) cls = 'morning';
+    else if (h >= 8 && h < 17) cls = 'day';
+    else if (h >= 17 && h < 20) cls = 'evening';
+    else cls = 'night';
+    document.body.className = cls;
+  }
 
+  function updateTime() {
+    const now = new Date();
+    const timeStr = now.toLocaleTimeString([], {hour12: false});
+    document.getElementById('time').textContent = timeStr;
+  }
+
+  async function fetchWeather() {
+    try {
+      const res = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${apiKey}&units=metric`);
+      if (!res.ok) throw new Error('Weather fetch failed');
+      const data = await res.json();
+      const temp = Math.round(data.main.temp);
+      const icon = data.weather[0].icon;
+      const description = data.weather[0].description;
+
+      document.getElementById('temp').textContent = `${temp}°C`;
+      document.getElementById('weatherEmoji').textContent = getEmoji(icon);
+      document.getElementById('greeting').textContent = description.charAt(0).toUpperCase() + description.slice(1);
+    } catch (e) {
+      document.getElementById('greeting').textContent = 'Unable to fetch weather';
+      console.error(e);
+    }
+  }
+
+  async function fetchIP() {
+    try {
+      const res = await fetch('https://ident.me/.json');
+      if (!res.ok) throw new Error('IP fetch failed');
+      const data = await res.json();
+      document.getElementById('ipAddress').textContent = `Your IP: ${data.address}`;
+    } catch (e) {
+      document.getElementById('ipAddress').textContent = 'Unable to detect IP';
+      console.error(e);
+    }
+  }
+
+  function init() {
+    updateBackgroundByTime();
+    updateTime();
+    fetchWeather();
+    fetchIP();
+    setInterval(updateTime, 1000);
+    setInterval(fetchWeather, 10 * 60 * 1000);
+    setInterval(updateBackgroundByTime, 60 * 1000);
+    setInterval(fetchIP, 10 * 60 * 1000);
+  }
+
+  init();
 </script>
-
 </body>
 </html>
