@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Atmos - Real-time Weather & Time</title>
+<title>Atmos - Weather & Time</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@200&display=swap');
   body, html {
@@ -38,27 +38,22 @@
     margin-top: 0.1em;
     color: rgba(255,255,255,0.7);
   }
-  /* Backgrounds */
-  .clear-day {
+  /* Backgrounds based on time */
+  .morning {
+    background: linear-gradient(to top, #ffe259, #ffa751);
+  }
+  .day {
     background: linear-gradient(to top, #56ccf2, #2f80ed);
   }
-  .clear-night {
+  .evening {
+    background: linear-gradient(to top, #614385, #516395);
+  }
+  .night {
     background: radial-gradient(ellipse at bottom, #1b2735 0%, #090a0f 100%);
-  }
-  .rain {
-    background: linear-gradient(to top, #4a90e2, #013a63);
-  }
-  .cloudy {
-    background: linear-gradient(to top, #757f9a, #d7dde8);
-    color: #333;
-  }
-  .snow {
-    background: linear-gradient(to top, #83a4d4, #b6fbff);
-    color: #333;
   }
 </style>
 </head>
-<body class="clear-day">
+<body class="day">
   <div id="time" class="container">--:--:--</div>
   <div id="weatherEmoji" class="emoji">☀️</div>
   <div id="temp" class="temp">--°C</div>
@@ -66,47 +61,33 @@
 
 <script>
   const apiKey = 'YOUR_API_KEY'; // Replace with your OpenWeatherMap API key
-  const city = 'New York'; // You can change city here or extend to user input
+  const city = 'New York'; // Change city or make it dynamic as needed
 
-  // Map weather condition to emoji and background class
-  function getWeatherVisuals(icon, isDay) {
-    const code = icon.slice(0, 2); // e.g. "01", "09", "10"
-    let emoji = '❓';
-    let bgClass = 'clear-day';
+  // Map OpenWeather icons to emojis (for display only)
+  function getEmoji(icon) {
+    const code = icon.slice(0,2);
+    if (code === '01') return icon.endsWith('d') ? '☀️' : '🌕'; // clear day/night
+    if (['02','03','04'].includes(code)) return '☁️'; // clouds
+    if (['09','10'].includes(code)) return '🌧️'; // rain
+    if (code === '11') return '⛈️'; // thunderstorm
+    if (code === '13') return '❄️'; // snow
+    return '🌡️'; // default
+  }
 
-    if (code === '01') { // clear
-      if (isDay) {
-        emoji = '☀️';
-        bgClass = 'clear-day';
-      } else {
-        emoji = '🌕';
-        bgClass = 'clear-night';
-      }
-    } else if (code === '02' || code === '03' || code === '04') { // clouds
-      emoji = '☁️';
-      bgClass = 'cloudy';
-    } else if (code === '09' || code === '10') { // rain
-      emoji = '🌧️';
-      bgClass = 'rain';
-    } else if (code === '11') { // thunderstorm
-      emoji = '⛈️';
-      bgClass = 'rain';
-    } else if (code === '13') { // snow
-      emoji = '❄️';
-      bgClass = 'snow';
-    } else {
-      emoji = '🌡️';
-      bgClass = 'clear-day';
-    }
-    return { emoji, bgClass };
+  // Set background class by current hour only (ignores weather)
+  function updateBackgroundClassByTime() {
+    const h = new Date().getHours();
+    let cls = 'day';
+    if (h >= 5 && h < 8) cls = 'morning';
+    else if (h >= 8 && h < 17) cls = 'day';
+    else if (h >= 17 && h < 20) cls = 'evening';
+    else cls = 'night';
+    document.body.className = cls;
   }
 
   function updateTime() {
     const now = new Date();
-    const h = now.getHours();
-    const m = now.getMinutes();
-    const s = now.getSeconds();
-    const timeStr = `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+    const timeStr = now.toLocaleTimeString([], {hour12: false});
     document.getElementById('time').textContent = timeStr;
   }
 
@@ -114,32 +95,28 @@
     const url = `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${apiKey}&units=metric`;
     try {
       const res = await fetch(url);
-      if (!res.ok) throw new Error('Weather data fetch failed');
+      if (!res.ok) throw new Error('Weather fetch failed');
       const data = await res.json();
-
       const temp = Math.round(data.main.temp);
       const icon = data.weather[0].icon;
-      const isDay = icon.endsWith('d');
       const description = data.weather[0].description;
 
-      const visuals = getWeatherVisuals(icon, isDay);
-
       document.getElementById('temp').textContent = `${temp}°C`;
-      document.getElementById('weatherEmoji').textContent = visuals.emoji;
-      document.body.className = visuals.bgClass;
+      document.getElementById('weatherEmoji').textContent = getEmoji(icon);
       document.getElementById('greeting').textContent = description.charAt(0).toUpperCase() + description.slice(1);
-
-    } catch (error) {
-      document.getElementById('greeting').textContent = 'Failed to fetch weather data';
-      console.error(error);
+    } catch (e) {
+      document.getElementById('greeting').textContent = 'Unable to fetch weather';
+      console.error(e);
     }
   }
 
   function init() {
+    updateBackgroundClassByTime();
     updateTime();
     fetchWeather();
-    setInterval(updateTime, 1000);          // Update clock every second
-    setInterval(fetchWeather, 10 * 60 * 1000); // Update weather every 10 mins
+    setInterval(updateTime, 1000);
+    setInterval(fetchWeather, 10 * 60 * 1000); // refresh weather every 10 mins
+    setInterval(updateBackgroundClassByTime, 60 * 1000); // refresh background every min for time change
   }
 
   init();
