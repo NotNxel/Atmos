@@ -94,9 +94,81 @@
   </div>
 
 <script>
-  const apiNinjasKey = 'YiffA/55GTcQVZ0QzhYJow==rJfIBRK8Mw8DSi35'; // Get free key from https://api-ninjas.com/api/weather
+  const apiNinjasKey = 'YOUR_API_NINJAS_API_KEY'; // Get free key from https://api-ninjas.com/api/weather
 
   function getEmoji(weather) {
     weather = weather.toLowerCase();
     if (weather.includes('clear')) return '☀️';
-    if (weather.includes('cloud')) return
+    if (weather.includes('cloud')) return '☁️';
+    if (weather.includes('rain')) return '🌧️';
+    if (weather.includes('thunderstorm')) return '⛈️';
+    if (weather.includes('snow')) return '❄️';
+    if (weather.includes('fog') || weather.includes('mist')) return '🌫️';
+    return '🌡️';
+  }
+
+  function updateBackgroundByTime() {
+    const h = new Date().getHours();
+    let cls = 'day';
+    if (h >= 5 && h < 8) cls = 'morning';
+    else if (h >= 8 && h < 17) cls = 'day';
+    else if (h >= 17 && h < 20) cls = 'evening';
+    else cls = 'night';
+    document.body.className = cls;
+  }
+
+  function updateTime() {
+    const now = new Date();
+    const timeStr = now.toLocaleTimeString([], {hour12: false});
+    document.getElementById('time').textContent = timeStr;
+  }
+
+  async function fetchWeather(lat, lon) {
+    try {
+      const res = await fetch(`https://api.api-ninjas.com/v1/weather?lat=${lat}&lon=${lon}`, {
+        headers: { 'X-Api-Key': apiNinjasKey }
+      });
+      if (!res.ok) throw new Error('Weather fetch failed');
+      const data = await res.json();
+      document.getElementById('temp').textContent = `${data.temp}°C`;
+      document.getElementById('weatherEmoji').textContent = getEmoji(data.cloud_pct ? 'cloud' : data.weather || '');
+      document.getElementById('greeting').textContent = data.weather || 'Clear';
+    } catch (e) {
+      document.getElementById('greeting').textContent = 'Unable to fetch weather';
+      console.error(e);
+    }
+  }
+
+  async function fetchIPAndLocationWeather() {
+    try {
+      const ipRes = await fetch('https://api.ipify.org');
+      if (!ipRes.ok) throw new Error('IP fetch failed');
+      const ip = await ipRes.text();
+      document.getElementById('ipAddress').textContent = `Your IP: ${ip}`;
+
+      const geoRes = await fetch(`http://ip-api.com/json/${ip}`);
+      if (!geoRes.ok) throw new Error('Geo fetch failed');
+      const geoData = await geoRes.json();
+
+      if (geoData.status !== 'success') throw new Error('Geo lookup failed');
+      updateBackgroundByTime();
+      await fetchWeather(geoData.lat, geoData.lon);
+
+    } catch (e) {
+      document.getElementById('ipAddress').textContent = 'Unable to detect IP/location';
+      document.getElementById('greeting').textContent = 'Unable to fetch weather';
+      console.error(e);
+    }
+  }
+
+  function init() {
+    fetchIPAndLocationWeather();
+    updateTime();
+    setInterval(updateTime, 1000);
+    setInterval(fetchIPAndLocationWeather, 10 * 60 * 1000);
+  }
+
+  init();
+</script>
+</body>
+</html>
