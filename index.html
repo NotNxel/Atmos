@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Atmos - Weather & Time</title>
+<title>Atmos - Weather & Time by IP</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@100&display=swap');
   body, html {
@@ -48,7 +48,7 @@
     align-items: center;
     justify-content: center;
     height: 100vh;
-    padding-top: 70px; /* to avoid overlapping with fixed texts */
+    padding-top: 70px;
   }
   #time {
     font-weight: 200;
@@ -68,7 +68,7 @@
     margin-top: 0.1em;
     color: rgba(255,255,255,0.7);
   }
-  /* Backgrounds by time */
+  /* Background by time */
   .morning {
     background: linear-gradient(to top, #ffe259, #ffa751);
   }
@@ -85,87 +85,18 @@
 </head>
 <body class="day">
   <div id="topText">Atmos</div>
-  <div id="ipAddress">Detecting IP...</div>
+  <div id="ipAddress">Detecting IP and location...</div>
   <div class="mainContainer">
     <div id="time">--:--:--</div>
     <div id="weatherEmoji">☀️</div>
     <div id="temp">--°C</div>
-    <div id="greeting">Loading...</div>
+    <div id="greeting">Loading weather...</div>
   </div>
 
 <script>
-  const apiKey = 'https://api.open-meteo.com/v1/forecast?latitude=12.9719&longitude=77.5937&hourly=temperature_2m,relative_humidity_2m&timezone=auto&forecast_days=1'; // Replace with your OpenWeatherMap API key
-  const city = 'Bengaluru'; // Replace as needed
+  const apiNinjasKey = 'YiffA/55GTcQVZ0QzhYJow==rJfIBRK8Mw8DSi35'; // Get free key from https://api-ninjas.com/api/weather
 
-  function getEmoji(icon) {
-    const code = icon.slice(0, 2);
-    if (code === '01') return icon.endsWith('d') ? '☀️' : '🌕';
-    if (['02','03','04'].includes(code)) return '☁️';
-    if (['09','10'].includes(code)) return '🌧️';
-    if (code === '11') return '⛈️';
-    if (code === '13') return '❄️';
-    return '🌡️';
-  }
-
-  function updateBackgroundByTime() {
-    const h = new Date().getHours();
-    let cls = 'day';
-    if (h >= 5 && h < 8) cls = 'morning';
-    else if (h >= 8 && h < 17) cls = 'day';
-    else if (h >= 17 && h < 20) cls = 'evening';
-    else cls = 'night';
-    document.body.className = cls;
-  }
-
-  function updateTime() {
-    const now = new Date();
-    const timeStr = now.toLocaleTimeString([], {hour12: false});
-    document.getElementById('time').textContent = timeStr;
-  }
-
-  async function fetchWeather() {
-    try {
-      const res = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${apiKey}&units=metric`);
-      if (!res.ok) throw new Error('Weather fetch failed');
-      const data = await res.json();
-      const temp = Math.round(data.main.temp);
-      const icon = data.weather[0].icon;
-      const description = data.weather[0].description;
-
-      document.getElementById('temp').textContent = `${temp}°C`;
-      document.getElementById('weatherEmoji').textContent = getEmoji(icon);
-      document.getElementById('greeting').textContent = description.charAt(0).toUpperCase() + description.slice(1);
-    } catch (e) {
-      document.getElementById('greeting').textContent = 'Unable to fetch weather';
-      console.error(e);
-    }
-  }
-
-  async function fetchIP() {
-    try {
-      // ipify plain-text endpoint returns just the IP directly, simplest reliable endpoint
-      const res = await fetch('https://api.ipify.org');
-      if (!res.ok) throw new Error('IP fetch failed');
-      const ip = await res.text();
-      document.getElementById('ipAddress').textContent = `Your IP: ${ip}`;
-    } catch (e) {
-      document.getElementById('ipAddress').textContent = 'Unable to detect IP';
-      console.error(e);
-    }
-  }
-
-  function init() {
-    updateBackgroundByTime();
-    updateTime();
-    fetchWeather();
-    fetchIP();
-    setInterval(updateTime, 1000);
-    setInterval(fetchWeather, 10 * 60 * 1000);
-    setInterval(updateBackgroundByTime, 60 * 1000);
-    setInterval(fetchIP, 10 * 60 * 1000);
-  }
-
-  init();
-</script>
-</body>
-</html>
+  function getEmoji(weather) {
+    weather = weather.toLowerCase();
+    if (weather.includes('clear')) return '☀️';
+    if (weather.includes('cloud')) return
